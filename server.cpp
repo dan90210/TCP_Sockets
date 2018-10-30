@@ -6,6 +6,10 @@
 // shutdown to end read/write
 // close to release data
 
+/* This code was borrowed from
+ https://www.bogotobogo.com/cplusplus/sockets_server_client.php
+*/
+
 #define _BSD_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,23 +20,26 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#define PORT 9555
+
 void error(const char *msg) {
   perror(msg);
   exit(1);
 }
 
 int main (int argc, char *argv[]) {
-  int sockfd, newsockfd, portno;
+
+  /*
+  ============================
+      SET UP CONNECTION
+  ============================
+  */
+
+  int sockfd, newsockfd;
   socklen_t clilen;
   char buffer[256];
   struct sockaddr_in serv_addr, cli_addr;
   int n;
-
-  // takes in port as a command line parameter, change this later
-  if (argc < 2) {
-    fprintf(stderr, "ERROR, no port provided\n");
-    exit(1);
-  }
 
   // create a socket
   // socket(int domain, int type, int protocol)
@@ -42,8 +49,6 @@ int main (int argc, char *argv[]) {
   // clear address structure
   bzero((char *) &serv_addr, sizeof(serv_addr));
 
-  portno = atoi(argv[1]);
-
   // setup the host_addr structure for use in bind call
   // server byte order
   serv_addr.sin_family = AF_INET;
@@ -52,12 +57,12 @@ int main (int argc, char *argv[]) {
   serv_addr.sin_addr.s_addr = INADDR_ANY;
 
   // convert short integer value for port must be converted into network byte order
-  serv_addr.sin_port = htons(portno);
+  serv_addr.sin_port = htons(PORT);
 
   // bind(ind fd, struct socaddr *local_addr, socklen_t addr_length)
   // bind() passes file descriptor, the address of the structure,
   // and the length of the address structure
-  // This bind() call will bind the socket to the current IP address on port: portno
+  // This bind() call will bind the socket to the current IP address on port: PORT
   if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
     error("ERROR on binding");
   }
@@ -84,6 +89,12 @@ int main (int argc, char *argv[]) {
 
   printf("server: got connection from %s port %d\n",
             inet_ntoa(cli_addr.sin_addr), ntohs(cli_addr.sin_port));
+
+  /*
+  ===============================
+      DO STUFF ONCE CONNECTED
+  ===============================
+  */
 
   // This send() function sends the 13 bytes of the string to the new socket
   send(newsockfd, "Hello, world!\n", 13, 0);

@@ -14,6 +14,8 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+#define PORT 9555
+
 void error(const char *msg) {
     perror(msg);
     exit(0);
@@ -27,17 +29,16 @@ int main(int argc, char*argv[]) {
   ============================
   */
 
-  int sockfd, portno, n;
+  int sockfd, n;
   struct sockaddr_in serv_addr;
   struct hostent *server;
 
   char buffer[256];
-  if (argc < 3) {
-    fprintf(stderr, "usage is %s hostmane port\n", argv[0]);
+  if (argc < 2) {
+    fprintf(stderr, "usage is %s hostname\n", argv[0]);
     exit(0);
   }
 
-  portno = atoi(argv[2]);
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0) error("ERROR opening socket");
   server = gethostbyname(argv[1]);
@@ -50,7 +51,7 @@ int main(int argc, char*argv[]) {
   bcopy((char *)server->h_addr,
         (char *)&serv_addr.sin_addr.s_addr,
         server->h_length);
-  serv_addr.sin_port = htons(portno);
+  serv_addr.sin_port = htons(PORT);
   if (connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
     error("ERROR connecting");
   }
