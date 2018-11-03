@@ -19,8 +19,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <iostream>
 
 #define PORT 9555
+
+using namespace std;
 
 void error(const char *msg) {
   perror(msg);
@@ -85,10 +88,12 @@ int main (int argc, char *argv[]) {
   */
   newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
-  if (newsockfd < 0) error("ERROR on accept");
+  if (newsockfd < 0) {
+	  error("ERROR on accept");
+  }
 
-  printf("server: got connection from %s port %d\n",
-            inet_ntoa(cli_addr.sin_addr), ntohs(cli_addr.sin_port));
+  // printf("server: got connection from %s port %d\n",
+  //          inet_ntoa(cli_addr.sin_addr), ntohs(cli_addr.sin_port));
 
   /*
   ===============================
@@ -96,15 +101,23 @@ int main (int argc, char *argv[]) {
   ===============================
   */
 
-  // This send() function sends the 13 bytes of the string to the new socket
-  send(newsockfd, "Hello, world!\n", 13, 0);
-
-  bzero(buffer, 256);
-
-  n = read(newsockfd, buffer, 255);
-  if (n < 0) error("ERROR reading from socket");
-  printf("message from client: %s\n", buffer);
-
+  // Highest value we are checking to
+  int maxValue;
+  
+  // Read in max value from client
+  read(newsockfd, &maxValue, sizeof(int));
+  
+  int x[maxValue];
+  
+  read(newsockfd, &x, sizeof(x));
+  
+  int k;
+  for (k = 0; k<maxValue-1; k++) {
+	cout << x[k] << " ";
+  }
+  cout << "\n";
+  
+  
   close(newsockfd);
   close(sockfd);
   return 0;
