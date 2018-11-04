@@ -21,7 +21,7 @@
 #include <arpa/inet.h>
 #include <iostream>
 
-#define PORT 9555
+#define PORT 9556
 
 using namespace std;
 
@@ -107,7 +107,10 @@ int main (int argc, char *argv[]) {
   // Read in max value from client
   read(newsockfd, &maxValue, sizeof(int));
   
-  bool bitsetValues[maxValue+1];
+  bool *bitsetValues = new bool[maxValue + 1];
+  for (int i = 0; i <= maxValue; i++) {
+	  bitsetValues[i] = true;
+  }
   int i;
   while(true) {
 	  read(newsockfd, &i, sizeof(i));
@@ -125,7 +128,8 @@ int main (int argc, char *argv[]) {
 	  }
 	  if (i >= maxValue/2) {
 		  break;
-	  } else {  
+	  } else {
+		cout << "Prime: " << i << "\n";
 		for (int k=i*2; k<=maxValue; k += i) {
 			bitsetValues[k] = false;
 		}
@@ -137,7 +141,7 @@ int main (int argc, char *argv[]) {
 			cout << p << " ";
 		}
 	  }
-	  cout << "\n";
+	  cout << "\n\n";
 	  
 	  write(newsockfd, &i, sizeof(i));
 	  write(newsockfd, bitsetValues, sizeof(bitsetValues));

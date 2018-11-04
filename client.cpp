@@ -15,7 +15,7 @@
 #include <netdb.h>
 #include <iostream>
 
-#define PORT 9555
+#define PORT 9556
 
 using namespace std;
 
@@ -69,8 +69,13 @@ int main(int argc, char*argv[]) {
   cin >> maxValue;
   
   // Create array and default everything to true
-  bool bitsetValues[maxValue+1];
-  memset(bitsetValues, true, sizeof(bitsetValues));
+  //bool bitsetValues[maxValue+1];
+  //memset(bitsetValues, true, sizeof(bitsetValues));
+  
+  bool *bitsetValues = new bool[maxValue + 1];
+  for (int i = 0; i <= maxValue; i++) {
+	  bitsetValues[i] = true;
+  }
   
 	
   // Size of the array
@@ -78,23 +83,17 @@ int main(int argc, char*argv[]) {
   
 
   int i = 2;
-  while (bitsetValues[i] != true && i < maxValue/2) {
-	 i++;
+  cout << "Prime: " << i << "\n";
+  for (int k=i*2; k<=maxValue; k += i) {
+	bitsetValues[k] = false;
   }
-  if (i >= maxValue/2) {
-	
-  } else {
-	for (int k=i*2; k<=maxValue; k += i) {
-		bitsetValues[k] = false;
-	}
-  }
-  cout << "Sending: ";
+  cout << "Sent: ";
   for (int p = 2; p<=maxValue; p++) {
 	if (bitsetValues[p]) {
 		cout << p << " ";
 	}
   }
-  cout << "\n";
+  cout << "\n\n";
   
   write(sockfd, &i, sizeof(i));
   write(sockfd, bitsetValues, sizeof(bitsetValues));
@@ -103,31 +102,39 @@ int main(int argc, char*argv[]) {
 	  read(sockfd, &i, sizeof(i));
 	  read(sockfd, bitsetValues, sizeof(bitsetValues));
 	  cout << "Received: ";
-	  for (int p = 2; p<=maxValue; p++) {
+	  //int counter = 0;
+	 for (int p = 2; p<=maxValue; p++) {
 		if (bitsetValues[p]) {
 			cout << p << " ";
 		}
 	  }
+	 // while (counter != 3) {
+		  //if (bitsetValues[p]) {
+			//  cout << p << ", ";
+		//	  counter++;
+	//	  }
+	  //}
+	  //cout << "...," << endl;
 	  cout << "\n";
-	  i++;
 	  while (bitsetValues[i] != true && i < maxValue/2) {
 		 i++;
 	  }
 	  if (i >= maxValue/2) {
 		  break;
-	  } else {  
+	  } else {
+		cout << "Prime: " << i << "\n";		  
 		for (int k=i*2; k<=maxValue; k += i) {
 			bitsetValues[k] = false;
 		}
 	  }
 	  
-	  cout << "Sending: ";
+	  cout << "Sent: ";
 	  for (int p = 2; p<=maxValue; p++) {
 		if (bitsetValues[p]) {
 			cout << p << " ";
 		}
 	  }
-	  cout << "\n";
+	  cout << "\n\n";
 	  
 	  write(sockfd, &i, sizeof(i));
 	  write(sockfd, bitsetValues, sizeof(bitsetValues));
