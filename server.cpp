@@ -107,15 +107,41 @@ int main (int argc, char *argv[]) {
   // Read in max value from client
   read(newsockfd, &maxValue, sizeof(int));
   
-  int x[maxValue];
-  
-  read(newsockfd, &x, sizeof(x));
-  
-  int k;
-  for (k = 0; k<maxValue-1; k++) {
-	cout << x[k] << " ";
+  bool bitsetValues[maxValue+1];
+  int i;
+  while(true) {
+	  read(newsockfd, &i, sizeof(i));
+	  read(newsockfd, bitsetValues, sizeof(bitsetValues));
+	  cout << "Received: ";
+	  for (int p = 2; p<=maxValue; p++) {
+		if (bitsetValues[p]) {
+			cout << p << " ";
+		}
+	  }
+	  cout << "\n";
+	  i++;
+	  while (bitsetValues[i] != true && i < maxValue/2) {
+		 i++;
+	  }
+	  if (i >= maxValue/2) {
+		  break;
+	  } else {  
+		for (int k=i*2; k<=maxValue; k += i) {
+			bitsetValues[k] = false;
+		}
+	  }
+	  
+	  cout << "Sending: ";
+	  for (int p = 2; p<=maxValue; p++) {
+		if (bitsetValues[p]) {
+			cout << p << " ";
+		}
+	  }
+	  cout << "\n";
+	  
+	  write(newsockfd, &i, sizeof(i));
+	  write(newsockfd, bitsetValues, sizeof(bitsetValues));
   }
-  cout << "\n";
   
   
   close(newsockfd);

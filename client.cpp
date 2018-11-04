@@ -64,26 +64,74 @@ int main(int argc, char*argv[]) {
   ===============================
   */
   
-  int i;
+  int maxValue;
   printf("Please enter the max value: ");
-  cin >> i;
+  cin >> maxValue;
   
-  // Create array and fill it with values
-  int x[(i-1)];
+  // Create array and default everything to true
+  bool bitsetValues[maxValue+1];
+  memset(bitsetValues, true, sizeof(bitsetValues));
   
-  int j;
-  for (j = 0; j<i-1; j++) {
-	x[j] = j+2;
+	
+  // Size of the array
+  write(sockfd, &maxValue, sizeof(maxValue));
+  
+
+  int i = 2;
+  while (bitsetValues[i] != true && i < maxValue/2) {
+	 i++;
   }
-  
-  int k;
-  for (k = 0; k<i-1; k++) {
-	cout << x[k] << " ";
+  if (i >= maxValue/2) {
+	
+  } else {
+	for (int k=i*2; k<=maxValue; k += i) {
+		bitsetValues[k] = false;
+	}
+  }
+  cout << "Sending: ";
+  for (int p = 2; p<=maxValue; p++) {
+	if (bitsetValues[p]) {
+		cout << p << " ";
+	}
   }
   cout << "\n";
-
-  write(sockfd, &i, sizeof(i)); 
-  write(sockfd, x, sizeof(x));
+  
+  write(sockfd, &i, sizeof(i));
+  write(sockfd, bitsetValues, sizeof(bitsetValues));
+  
+   while(true) {
+	  read(sockfd, &i, sizeof(i));
+	  read(sockfd, bitsetValues, sizeof(bitsetValues));
+	  cout << "Received: ";
+	  for (int p = 2; p<=maxValue; p++) {
+		if (bitsetValues[p]) {
+			cout << p << " ";
+		}
+	  }
+	  cout << "\n";
+	  i++;
+	  while (bitsetValues[i] != true && i < maxValue/2) {
+		 i++;
+	  }
+	  if (i >= maxValue/2) {
+		  break;
+	  } else {  
+		for (int k=i*2; k<=maxValue; k += i) {
+			bitsetValues[k] = false;
+		}
+	  }
+	  
+	  cout << "Sending: ";
+	  for (int p = 2; p<=maxValue; p++) {
+		if (bitsetValues[p]) {
+			cout << p << " ";
+		}
+	  }
+	  cout << "\n";
+	  
+	  write(sockfd, &i, sizeof(i));
+	  write(sockfd, bitsetValues, sizeof(bitsetValues));
+  }
   
   close(sockfd);
   return 0;
