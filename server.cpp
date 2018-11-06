@@ -1,11 +1,3 @@
-// create a socket, get file descriptor
-// bind to an address
-// listen on a bort and wait for a connectino to be established
-// accept the connection from Client
-// send/receive
-// shutdown to end read/write
-// close to release data
-
 #define _BSD_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,8 +11,8 @@
 #include <bitset>
 #include <math.h>
 
-#define PORT 9554
-#define MAXVALUE 30
+#define PORT 9555
+#define MAXVALUE 500
 
 using namespace std;
 
@@ -101,111 +93,120 @@ int main (int argc, char *argv[]) {
 	*/
 	
 	int i;
-	
-	// Create bitset and set all to 1
-	//bitset<MAXVALUE> bitsetValues;
-	//bitsetValues.set();
-	
+	int code1 = -1;
 	// Data structure for what the other side has
-	bitset<MAXVALUE> otherSideBitset;
-	
-	
-	
-	read(newsockfd, &i, sizeof(i));
-	read(newsockfd, &otherSideBitset, sizeof(otherSideBitset));
-	
-	// bitsetValues = (bitsetValues &= otherSideBitset);
-	
-	cout << "Received: ";
-	for (int p = 2; p <= MAXVALUE; p++) {
-		if (otherSideBitset[p]) {
-			cout << p << " ";
+	bitset<MAXVALUE>& otherSideBitset = *(new bitset<MAXVALUE>());
+
+	while (true) {
+		read(newsockfd, &i, sizeof(i));
+		if (i == code1) {
+			break;
 		}
-	}
-	cout << "\n";
-	
-	// Find the next prime
-	while (otherSideBitset[i] != 1 && i <= sqrt(MAXVALUE)) {
-		i++;
-	}
-	
-	// We have reached our highest value to check
-	if (i > sqrt(MAXVALUE)) {
-		// Send -1 to signal we have run out
-	}
-	
-	cout << "Prime: " << i << "\n";
-	
-	// Set multiples of i to false
-	for (int k=i*2; k<=MAXVALUE; k += i) {
-		otherSideBitset[k] = false;
-	}
-	
-	// Set i to false
-	otherSideBitset[i] = false;
-	
-	cout << "Sent: ";
-	for (int p = 2; p <= MAXVALUE; p++) {
-		if (otherSideBitset[p]) {
-			cout << p << " ";
+		read(newsockfd, &otherSideBitset, sizeof(otherSideBitset));
+		
+		cout << "Received: ";
+		if (otherSideBitset.count() > 6) {
+			int startCount = 0;
+			int safetyCheck = 2;
+			while (startCount < 3 && safetyCheck < MAXVALUE) {
+				if (otherSideBitset[safetyCheck] == true) {
+					cout << safetyCheck << " ";
+					startCount++;
+				}
+				safetyCheck++;
+			}
+			
+			cout << "... ";
+			
+			int endCount = 3;
+			int safetyCheck1 = MAXVALUE;
+			int a[3];
+			
+			while (endCount > 0 && safetyCheck1 > 0) {
+				if (otherSideBitset[safetyCheck1] == true) {
+					a[endCount-1] = safetyCheck1;
+					endCount--;
+				}
+				safetyCheck1--;
+			}
+			
+			for (int z = 0; z < 3; z++) {
+				cout << a[z] << " ";
+			}	
+		} else {
+			for (int p = 2; p <= MAXVALUE; p++) {
+				if (otherSideBitset[p]) {
+					cout << p << " ";
+				}
+			}
 		}
+		cout << "\n";
+		
+		// Find the next prime
+		while (otherSideBitset[i] != 1 && i <= sqrt(MAXVALUE)) {
+			i++;
+		}
+		
+		// We have reached our highest value to check
+		if (i > sqrt(MAXVALUE)) {
+			// Send -1 to signal we have run out
+			int code = -1;
+			write(newsockfd, &code, sizeof(code));
+			break;
+		}
+		
+		cout << "Prime: " << i << "\n";
+		
+		// Set multiples of i to false
+		for (int k=i*2; k<=MAXVALUE; k += i) {
+			otherSideBitset[k] = false;
+		}
+		
+		// Set i to false
+		otherSideBitset[i] = false;
+		
+		cout << "Sent: ";
+		if (otherSideBitset.count() > 6) {
+			int startCount = 0;
+			int safetyCheck = 2;
+			while (startCount < 3 && safetyCheck < MAXVALUE) {
+				if (otherSideBitset[safetyCheck] == true) {
+					cout << safetyCheck << " ";
+					startCount++;
+				}
+				safetyCheck++;
+			}
+			
+			cout << "... ";
+			
+			int endCount = 3;
+			int safetyCheck1 = MAXVALUE;
+			int a[3];
+			
+			while (endCount > 0 && safetyCheck1 > 0) {
+				if (otherSideBitset[safetyCheck1] == true) {
+					a[endCount-1] = safetyCheck1;
+					endCount--;
+				}
+				safetyCheck1--;
+			}
+			
+			for (int z = 0; z < 3; z++) {
+				cout << a[z] << " ";
+			}	
+		} else {
+			for (int p = 2; p <= MAXVALUE; p++) {
+				if (otherSideBitset[p]) {
+					cout << p << " ";
+				}
+			}
+		}
+		cout << "\n\n";
+		
+		write(newsockfd, &i, sizeof(i));
+		write(newsockfd, &otherSideBitset, sizeof(otherSideBitset));
 	}
-	cout << "\n\n";
-	
-	write(newsockfd, &i, sizeof(i));
-	write(newsockfd, &otherSideBitset, sizeof(otherSideBitset));
-	
 	close(newsockfd);
 	close(sockfd);
 	return 0;
-	
-
-	// Highest value we are checking to
-	//int maxValue;
-
-	//// Read in max value from client
-	//read(newsockfd, &maxValue, sizeof(int));
-
-	//bool *bitsetValues = new bool[maxValue + 1];
-	//for (int i = 0; i < sizeof(bitsetValues)/sizeof(bitsetValues[0]); i = i+1) {
-	//	bitsetValues[i] = true;
-	//}
-	//int i;
-	//while(true) {
-	//	read(newsockfd, &i, sizeof(i));
-	//	read(newsockfd, bitsetValues, sizeof(bitsetValues));
-	//	cout << "Received: ";
-	//	for (int p = 2; p<=maxValue; p++) {
-	//		if (bitsetValues[p]) {
-	//			cout << p << " ";
-	//		}
-	//	}
-	//	cout << "\n";
-	//	i++;
-	//	while (bitsetValues[i] != true && i < maxValue/2) {
-	//		i++;
-	//	}
-	//	if (i >= maxValue/2) {
-	//		break;
-	//	} else {
-	//		cout << "Prime: " << i << "\n";
-	//		for (int k=i*2; k<=maxValue; k += i) {
-	//			bitsetValues[k] = false;
-	//		}
-	//	}
-	  
-	//	cout << "Sending: ";
-	//	for (int p = 2; p<=maxValue; p++) {
-	//		if (bitsetValues[p]) {
-	//			cout << p << " ";
-	//		}
-	//	}
-	//	cout << "\n\n";
-
-	//	write(newsockfd, &i, sizeof(i));
-	//	write(newsockfd, bitsetValues, sizeof(bitsetValues));
-	//}
-	//close(newsockfd);
-	//close(sockfd);
-	//return 0;
 }

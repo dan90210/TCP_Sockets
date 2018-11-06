@@ -1,10 +1,3 @@
-// create a socket
-// bind to an address
-// connect to a server
-// send/recieve data
-// shutdown to end read/write
-// close to release data
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -17,8 +10,8 @@
 #include <bitset>
 #include <math.h>
 
-#define PORT 9554
-#define MAXVALUE 30
+#define PORT 9555
+#define MAXVALUE 500
 
 using namespace std;
 
@@ -70,18 +63,17 @@ int main(int argc, char*argv[]) {
 	// Keeps track of which prime we are at
 	int i = 2;
 	// Bitset of all of our primes
-	bitset<MAXVALUE> bitsetValues;
+	bitset<MAXVALUE>& bitsetValues = *(new bitset<MAXVALUE>());
 	// Stores the cumulative list of primes
 	int primeList[MAXVALUE/2] = {0};
 	// Keeps track of where the next prime will be placed in primeList
 	int primeListIterator = 0;
 	
+	int code = -1;
+	
 	// Set all to 1
 	bitsetValues.set();
 	
-	
-	
-	// while (true) {
 	for (int k=i*2; k <= MAXVALUE; k += i) {
 		bitsetValues[k] = false;
 	}
@@ -90,6 +82,7 @@ int main(int argc, char*argv[]) {
 	primeList[primeListIterator] = i;
 	primeListIterator++;
 	bitsetValues[i] = 0;
+	
 	cout << "Primes: ";
 	int k = 0;
 	while(primeList[k] != 0) {
@@ -109,120 +102,140 @@ int main(int argc, char*argv[]) {
 	// Write values to server
 	write(sockfd, &i, sizeof(i));
 	write(sockfd, &bitsetValues, sizeof(bitsetValues));
-	
-	
 
-	
-	
-	// Read new values from server
-	read(sockfd, &i, sizeof(i));
-	read(sockfd, &bitsetValues, sizeof(bitsetValues));
-	
-	cout << "Received: ";
-	for (int p = 2; p <= MAXVALUE; p++) {
-		if (bitsetValues[p]) {
-			cout << p << " ";
+	while (true) {
+		// Read new values from server
+		read(sockfd, &i, sizeof(i));
+		if (i == code) {
+			break;
 		}
+		read(sockfd, &bitsetValues, sizeof(bitsetValues));
+
+		cout << "Received: ";
+		if (bitsetValues.count() > 6) {
+			int startCount = 0;
+			int safetyCheck = 2;
+			while (startCount < 3 && safetyCheck < MAXVALUE) {
+				if (bitsetValues[safetyCheck] == true) {
+					cout << safetyCheck << " ";
+					startCount++;
+				}
+				safetyCheck++;
+			}
+			
+			cout << "... ";
+			
+			int endCount = 3;
+			int safetyCheck1 = MAXVALUE;
+			int a[3];
+			
+			while (endCount > 0 && safetyCheck1 > 0) {
+				if (bitsetValues[safetyCheck1] == true) {
+					a[endCount-1] = safetyCheck1;
+					endCount--;
+				}
+				safetyCheck1--;
+			}
+			
+			for (int z = 0; z < 3; z++) {
+				cout << a[z] << " ";
+			}	
+		} else {
+			for (int p = 2; p <= MAXVALUE; p++) {
+				if (bitsetValues[p]) {
+					cout << p << " ";
+				}
+			}
+		}
+		cout << "\n";
+		
+		for (int k=i*2; k <= MAXVALUE; k += i) {
+			bitsetValues[k] = false;
+		}	
+	
+		// Store the prime and print out the prime list
+		primeList[primeListIterator] = i;
+		primeListIterator++;
+		bitsetValues[i] = 0;
+		
+		// Find the next prime
+		while (bitsetValues[i] != 1 && i <= sqrt(MAXVALUE)) {
+			i++;
+		}
+		
+		// We have reached our highest value to check
+		if (i > sqrt(MAXVALUE)) {
+			// Send -1 to signal we have run out
+			int code1 = -1;
+			write(sockfd, &code1, sizeof(code1));
+			break;
+		}
+		
+		cout << "Primes: ";
+		int k = 0;
+		while(primeList[k] != 0) {
+			cout << primeList[k] << " ";
+			k++;
+		}
+		cout << "\n";
+		
+		cout << "Sent: ";
+		if (bitsetValues.count() > 6) {
+			int startCount = 0;
+			int safetyCheck = 2;
+			while (startCount < 3 && safetyCheck < MAXVALUE) {
+				if (bitsetValues[safetyCheck] == true) {
+					cout << safetyCheck << " ";
+					startCount++;
+				}
+				safetyCheck++;
+			}
+			
+			cout << "... ";
+			
+			int endCount = 3;
+			int safetyCheck1 = MAXVALUE;
+			int a[3];
+			
+			while (endCount > 0 && safetyCheck1 > 0) {
+				if (bitsetValues[safetyCheck1] == true) {
+					a[endCount-1] = safetyCheck1;
+					endCount--;
+				}
+				safetyCheck1--;
+			}
+			
+			for (int z = 0; z < 3; z++) {
+				cout << a[z] << " ";
+			}	
+		} else {
+			for (int p = 2; p <= MAXVALUE; p++) {
+				if (bitsetValues[p]) {
+					cout << p << " ";
+				}
+			}
+		}
+		cout << "\n\n";
+		
+		// Write values to server
+		write(sockfd, &i, sizeof(i));
+		write(sockfd, &bitsetValues, sizeof(bitsetValues));
 	}
-	cout << "\n";
 	
-	primeList[primeListIterator] = i;
-	primeListIterator++;
-	bitsetValues[i] = 0;
-	
-	cout << "Primes: ";
-	k = 0;
-	while(primeList[k] != 0) {
-		cout << primeList[k] << " ";
-		k++;
+	cout << "\nFinal list of Primes: ";
+	int p = 0;
+	while(primeList[p] != 0) {
+		cout << primeList[p] << " ";
+		p++;
 	}
-	cout << "\n";
-	
-	// Find the next prime
-	while (bitsetValues[i] != 1 && i <= sqrt(MAXVALUE)) {
-		i++;
+	int m = 2;
+	while (m <= MAXVALUE) {
+		if (bitsetValues[m] == true) {
+			cout << m << " ";
+		}
+		m++;
 	}
-	
-	// We have reached our highest value to check
-	if (i > sqrt(MAXVALUE)) {
-		// Send -1 to signal we have run out
-	}
-	
-	
-	
+	cout << "\n\n";
 	close(sockfd);
 	return 0;
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	//// Create array and default everything to true
-	//bool *bitsetValues = new bool[maxValue + 1];
-	//for (int i = 0; i < sizeof(bitsetValues)/sizeof(bitsetValues[0]); i = i+1) {
-	 // bitsetValues[i] = true;
-	//}
-  //
-	//// Size of the array
-	//write(sockfd, &maxValue, sizeof(maxValue));
-	//int i = 2;
-	//cout << "Prime: " << i << "\n";
-	//for (int k=i*2; k<=maxValue; k += i) {
-	//	bitsetValues[k] = false;
-	//}
-	//
-	//cout << "Sent: ";
-	//for (int p = 2; p<=maxValue; p++) {
-	//	if (bitsetValues[p]) {
-	//		cout << p << " ";
-	//	}
-	//}
-	//cout << "\n\n";
-	//
-	//write(sockfd, &i, sizeof(i));
-	//write(sockfd, bitsetValues, sizeof(bitsetValues));
-//
-	//while(true) {
-	//	read(sockfd, &i, sizeof(i));
-	//	read(sockfd, bitsetValues, sizeof(bitsetValues));
-	//	cout << "Received: ";
-	//	//int counter = 0;
-	//	for (int p = 2; p<=maxValue; p++) {
-	//		if (bitsetValues[p]) {
-	//			cout << p << " ";
-	//		}
-	//	}
-	//	cout << "\n";
-	//	while (bitsetValues[i] != true && i < maxValue/2) {
-	//		i++;
-	//	}
-	//	if (i >= maxValue/2) {
-	//		break;
-	//	} else {
-	//		cout << "Prime: " << i << "\n";		  
-	//		for (int k=i*2; k<=maxValue; k += i) {
-	//			bitsetValues[k] = false;
-	//		}
-	//	}
-	 // 
-	//	cout << "Sent: ";
-	//	for (int p = 2; p<=maxValue; p++) {
-	//		if (bitsetValues[p]) {
-	//			cout << p << " ";
-	//		}
-	//	}
-	//	cout << "\n\n";
-	//
-	//	write(sockfd, &i, sizeof(i));
-	//	write(sockfd, bitsetValues, sizeof(bitsetValues));
-	//}
-  
-	//close(sockfd);
-	//return 0;
 }
