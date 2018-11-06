@@ -11,8 +11,8 @@
 #include <bitset>
 #include <math.h>
 
-#define PORT 9555
-#define MAXVALUE 500
+#define PORT 9553
+#define MAXVALUE 11500
 
 using namespace std;
 

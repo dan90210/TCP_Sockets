@@ -10,8 +10,8 @@
 #include <bitset>
 #include <math.h>
 
-#define PORT 9555
-#define MAXVALUE 500
+#define PORT 9553
+#define MAXVALUE 11500
 
 using namespace std;
 
@@ -92,12 +92,42 @@ int main(int argc, char*argv[]) {
 	cout << "\n";
 	
 	cout << "Sent: ";
-	for (int p = 2; p <= MAXVALUE; p++) {
-		if (bitsetValues[p]) {
-			cout << p << " ";
+		if (bitsetValues.count() > 6) {
+			int startCount = 0;
+			int safetyCheck = 2;
+			while (startCount < 3 && safetyCheck < MAXVALUE) {
+				if (bitsetValues[safetyCheck] == true) {
+					cout << safetyCheck << " ";
+					startCount++;
+				}
+				safetyCheck++;
+			}
+			
+			cout << "... ";
+			
+			int endCount = 3;
+			int safetyCheck1 = MAXVALUE;
+			int a[3];
+			
+			while (endCount > 0 && safetyCheck1 > 0) {
+				if (bitsetValues[safetyCheck1] == true) {
+					a[endCount-1] = safetyCheck1;
+					endCount--;
+				}
+				safetyCheck1--;
+			}
+			
+			for (int z = 0; z < 3; z++) {
+				cout << a[z] << " ";
+			}	
+		} else {
+			for (int p = 2; p <= MAXVALUE; p++) {
+				if (bitsetValues[p]) {
+					cout << p << " ";
+				}
+			}
 		}
-	}
-	cout << "\n\n";
+		cout << "\n\n";
 	
 	// Write values to server
 	write(sockfd, &i, sizeof(i));
