@@ -10,7 +10,7 @@
 #include <bitset>
 #include <math.h>
 
-#define PORT 9553
+#define PORT 9554
 #define MAXVALUE 11500
 
 using namespace std;
@@ -63,26 +63,28 @@ int main(int argc, char*argv[]) {
 	// Keeps track of which prime we are at
 	int i = 2;
 	// Bitset of all of our primes
-	bitset<MAXVALUE>& bitsetValues = *(new bitset<MAXVALUE>());
+	bitset<MAXVALUE>* bitsetValues = new bitset<MAXVALUE>();
 	// Stores the cumulative list of primes
-	int primeList[MAXVALUE/2] = {0};
+	int primeList[(int)ceil(sqrt(MAXVALUE))] = {0};
 	// Keeps track of where the next prime will be placed in primeList
 	int primeListIterator = 0;
-	
+	// We look for this code from the other side to know if we are done
 	int code = -1;
 	
 	// Set all to 1
-	bitsetValues.set();
+	bitsetValues->set();
 	
+	// Set all multiples of i to false
 	for (int k=i*2; k <= MAXVALUE; k += i) {
-		bitsetValues[k] = false;
+		(*bitsetValues)[k] = 0;
 	}
 	
 	// Store the prime and print out the prime list
 	primeList[primeListIterator] = i;
 	primeListIterator++;
-	bitsetValues[i] = 0;
+	(*bitsetValues)[i] = 0;
 	
+	// Print out primes
 	cout << "Primes: ";
 	int k = 0;
 	while(primeList[k] != 0) {
@@ -91,12 +93,14 @@ int main(int argc, char*argv[]) {
 	}
 	cout << "\n";
 	
+	// Print out sent
 	cout << "Sent: ";
-		if (bitsetValues.count() > 6) {
+		// We want to print a, b, c, ... x, y, z
+		if (bitsetValues->count() > 6) {
 			int startCount = 0;
 			int safetyCheck = 2;
 			while (startCount < 3 && safetyCheck < MAXVALUE) {
-				if (bitsetValues[safetyCheck] == true) {
+				if ((*bitsetValues)[safetyCheck]) {
 					cout << safetyCheck << " ";
 					startCount++;
 				}
@@ -110,7 +114,7 @@ int main(int argc, char*argv[]) {
 			int a[3];
 			
 			while (endCount > 0 && safetyCheck1 > 0) {
-				if (bitsetValues[safetyCheck1] == true) {
+				if ((*bitsetValues)[safetyCheck1]) {
 					a[endCount-1] = safetyCheck1;
 					endCount--;
 				}
@@ -120,9 +124,11 @@ int main(int argc, char*argv[]) {
 			for (int z = 0; z < 3; z++) {
 				cout << a[z] << " ";
 			}	
-		} else {
+		} 
+		// We want to print all of what we sent
+		else {
 			for (int p = 2; p <= MAXVALUE; p++) {
-				if (bitsetValues[p]) {
+				if ((*bitsetValues)[p]) {
 					cout << p << " ";
 				}
 			}
@@ -131,22 +137,26 @@ int main(int argc, char*argv[]) {
 	
 	// Write values to server
 	write(sockfd, &i, sizeof(i));
-	write(sockfd, &bitsetValues, sizeof(bitsetValues));
+	write(sockfd, bitsetValues, sizeof(*bitsetValues));
 
+	// Do this until we are done
 	while (true) {
 		// Read new values from server
 		read(sockfd, &i, sizeof(i));
+		// We got to sqrt(MAXVALUE)
 		if (i == code) {
 			break;
 		}
-		read(sockfd, &bitsetValues, sizeof(bitsetValues));
+		read(sockfd, bitsetValues, sizeof(*bitsetValues));
 
+		// Print out received
 		cout << "Received: ";
-		if (bitsetValues.count() > 6) {
+		// We want to print a, b, c, ... x, y, z
+		if (bitsetValues->count() > 6) {
 			int startCount = 0;
 			int safetyCheck = 2;
 			while (startCount < 3 && safetyCheck < MAXVALUE) {
-				if (bitsetValues[safetyCheck] == true) {
+				if ((*bitsetValues)[safetyCheck]) {
 					cout << safetyCheck << " ";
 					startCount++;
 				}
@@ -160,7 +170,7 @@ int main(int argc, char*argv[]) {
 			int a[3];
 			
 			while (endCount > 0 && safetyCheck1 > 0) {
-				if (bitsetValues[safetyCheck1] == true) {
+				if ((*bitsetValues)[safetyCheck1]) {
 					a[endCount-1] = safetyCheck1;
 					endCount--;
 				}
@@ -170,26 +180,23 @@ int main(int argc, char*argv[]) {
 			for (int z = 0; z < 3; z++) {
 				cout << a[z] << " ";
 			}	
-		} else {
+		} 
+		// We want to print all of what we received
+		else {
 			for (int p = 2; p <= MAXVALUE; p++) {
-				if (bitsetValues[p]) {
+				if ((*bitsetValues)[p]) {
 					cout << p << " ";
 				}
 			}
 		}
 		cout << "\n";
 		
-		for (int k=i*2; k <= MAXVALUE; k += i) {
-			bitsetValues[k] = false;
-		}	
-	
 		// Store the prime and print out the prime list
-		primeList[primeListIterator] = i;
-		primeListIterator++;
-		bitsetValues[i] = 0;
+		primeList[primeListIterator++] = i;
+		(*bitsetValues)[i] = 0;
 		
 		// Find the next prime
-		while (bitsetValues[i] != 1 && i <= sqrt(MAXVALUE)) {
+		while ((*bitsetValues)[i] != 1 && i <= sqrt(MAXVALUE)) {
 			i++;
 		}
 		
@@ -201,6 +208,16 @@ int main(int argc, char*argv[]) {
 			break;
 		}
 		
+		// Set multiples of i to false
+		for (int k=i*2; k <= MAXVALUE; k += i) {
+			(*bitsetValues)[k] = 0;
+		}	
+		
+		// Store the prime and print out the prime list
+		primeList[primeListIterator++] = i;
+		(*bitsetValues)[i] = 0;
+		
+		// Print out all of our primes
 		cout << "Primes: ";
 		int k = 0;
 		while(primeList[k] != 0) {
@@ -209,12 +226,14 @@ int main(int argc, char*argv[]) {
 		}
 		cout << "\n";
 		
+		// Print out what we sent
 		cout << "Sent: ";
-		if (bitsetValues.count() > 6) {
+		// We want to print a, b, c, ... x, y, z
+		if (bitsetValues->count() > 6) {
 			int startCount = 0;
 			int safetyCheck = 2;
 			while (startCount < 3 && safetyCheck < MAXVALUE) {
-				if (bitsetValues[safetyCheck] == true) {
+				if ((*bitsetValues)[safetyCheck]) {
 					cout << safetyCheck << " ";
 					startCount++;
 				}
@@ -228,7 +247,7 @@ int main(int argc, char*argv[]) {
 			int a[3];
 			
 			while (endCount > 0 && safetyCheck1 > 0) {
-				if (bitsetValues[safetyCheck1] == true) {
+				if ((*bitsetValues)[safetyCheck1]) {
 					a[endCount-1] = safetyCheck1;
 					endCount--;
 				}
@@ -238,9 +257,11 @@ int main(int argc, char*argv[]) {
 			for (int z = 0; z < 3; z++) {
 				cout << a[z] << " ";
 			}	
-		} else {
+		} 
+		// We want to print all of what we sent
+		else {
 			for (int p = 2; p <= MAXVALUE; p++) {
-				if (bitsetValues[p]) {
+				if ((*bitsetValues)[p]) {
 					cout << p << " ";
 				}
 			}
@@ -249,22 +270,27 @@ int main(int argc, char*argv[]) {
 		
 		// Write values to server
 		write(sockfd, &i, sizeof(i));
-		write(sockfd, &bitsetValues, sizeof(bitsetValues));
+		write(sockfd, bitsetValues, sizeof(*bitsetValues));
 	}
 	
+	// Print our final list of primes
 	cout << "\nFinal list of Primes: ";
 	int p = 0;
 	while(primeList[p] != 0) {
 		cout << primeList[p] << " ";
 		p++;
 	}
+	// Everything left in bitsetValues is prime
 	int m = 2;
 	while (m <= MAXVALUE) {
-		if (bitsetValues[m] == true) {
+		if ((*bitsetValues)[m]) {
 			cout << m << " ";
 		}
 		m++;
 	}
+	
+	delete bitsetValues;
+	
 	cout << "\n\n";
 	close(sockfd);
 	return 0;

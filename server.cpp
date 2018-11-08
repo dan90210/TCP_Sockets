@@ -11,7 +11,7 @@
 #include <bitset>
 #include <math.h>
 
-#define PORT 9553
+#define PORT 9554
 #define MAXVALUE 11500
 
 using namespace std;
@@ -31,7 +31,6 @@ int main (int argc, char *argv[]) {
 
 	int sockfd, newsockfd;
 	socklen_t clilen;
-	char buffer[256];
 	struct sockaddr_in serv_addr, cli_addr;
 	int n;
 
@@ -92,24 +91,28 @@ int main (int argc, char *argv[]) {
 	===============================
 	*/
 	
+	// Tracks which number we are testing primes of
 	int i;
+	// We look for this code to know if we are done
 	int code1 = -1;
 	// Data structure for what the other side has
-	bitset<MAXVALUE>& otherSideBitset = *(new bitset<MAXVALUE>());
+	bitset<MAXVALUE>* otherSideBitset = new bitset<MAXVALUE>();
 
 	while (true) {
 		read(newsockfd, &i, sizeof(i));
 		if (i == code1) {
 			break;
 		}
-		read(newsockfd, &otherSideBitset, sizeof(otherSideBitset));
+		read(newsockfd, otherSideBitset, sizeof(*otherSideBitset));
 		
+		// Print out what we received
 		cout << "Received: ";
-		if (otherSideBitset.count() > 6) {
+		// We want to print a, b, c, ... x, y, z
+		if (otherSideBitset->count() > 6) {
 			int startCount = 0;
 			int safetyCheck = 2;
 			while (startCount < 3 && safetyCheck < MAXVALUE) {
-				if (otherSideBitset[safetyCheck] == true) {
+				if ((*otherSideBitset)[safetyCheck]) {
 					cout << safetyCheck << " ";
 					startCount++;
 				}
@@ -123,7 +126,7 @@ int main (int argc, char *argv[]) {
 			int a[3];
 			
 			while (endCount > 0 && safetyCheck1 > 0) {
-				if (otherSideBitset[safetyCheck1] == true) {
+				if ((*otherSideBitset)[safetyCheck1]) {
 					a[endCount-1] = safetyCheck1;
 					endCount--;
 				}
@@ -133,9 +136,11 @@ int main (int argc, char *argv[]) {
 			for (int z = 0; z < 3; z++) {
 				cout << a[z] << " ";
 			}	
-		} else {
+		} 
+		// We want to print everything we got
+		else {
 			for (int p = 2; p <= MAXVALUE; p++) {
-				if (otherSideBitset[p]) {
+				if ((*otherSideBitset)[p]) {
 					cout << p << " ";
 				}
 			}
@@ -143,10 +148,10 @@ int main (int argc, char *argv[]) {
 		cout << "\n";
 		
 		// Find the next prime
-		while (otherSideBitset[i] != 1 && i <= sqrt(MAXVALUE)) {
+		while ((*otherSideBitset)[i] != 1 && i <= sqrt(MAXVALUE)) {
 			i++;
 		}
-		
+
 		// We have reached our highest value to check
 		if (i > sqrt(MAXVALUE)) {
 			// Send -1 to signal we have run out
@@ -155,22 +160,25 @@ int main (int argc, char *argv[]) {
 			break;
 		}
 		
+		// Print out our prime
 		cout << "Prime: " << i << "\n";
 		
 		// Set multiples of i to false
 		for (int k=i*2; k<=MAXVALUE; k += i) {
-			otherSideBitset[k] = false;
+			(*otherSideBitset)[k] = false;
 		}
 		
 		// Set i to false
-		otherSideBitset[i] = false;
+		(*otherSideBitset)[i] = 0;
 		
+		// We print out what we are sending
 		cout << "Sent: ";
-		if (otherSideBitset.count() > 6) {
+		// We want to print a, b, c, ... x, y, z
+		if (otherSideBitset->count() > 6) {
 			int startCount = 0;
 			int safetyCheck = 2;
 			while (startCount < 3 && safetyCheck < MAXVALUE) {
-				if (otherSideBitset[safetyCheck] == true) {
+				if ((*otherSideBitset)[safetyCheck] == true) {
 					cout << safetyCheck << " ";
 					startCount++;
 				}
@@ -184,7 +192,7 @@ int main (int argc, char *argv[]) {
 			int a[3];
 			
 			while (endCount > 0 && safetyCheck1 > 0) {
-				if (otherSideBitset[safetyCheck1] == true) {
+				if ((*otherSideBitset)[safetyCheck1]) {
 					a[endCount-1] = safetyCheck1;
 					endCount--;
 				}
@@ -194,9 +202,11 @@ int main (int argc, char *argv[]) {
 			for (int z = 0; z < 3; z++) {
 				cout << a[z] << " ";
 			}	
-		} else {
+		} 
+		// We want to print all of the numbers
+		else {
 			for (int p = 2; p <= MAXVALUE; p++) {
-				if (otherSideBitset[p]) {
+				if ((*otherSideBitset)[p]) {
 					cout << p << " ";
 				}
 			}
@@ -204,8 +214,10 @@ int main (int argc, char *argv[]) {
 		cout << "\n\n";
 		
 		write(newsockfd, &i, sizeof(i));
-		write(newsockfd, &otherSideBitset, sizeof(otherSideBitset));
+		write(newsockfd, otherSideBitset, sizeof(*otherSideBitset));
 	}
+	delete otherSideBitset;
+	
 	close(newsockfd);
 	close(sockfd);
 	return 0;
